@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: stg_marketing_events
+    description: "Staging table for marketing events"
+    columns:
+      - name: event_id
+        description: "Unique identifier for the marketing event."
+        tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: "Identifier for the user associated with the event."
+        tests:
+          - not_null
+      - name: event_type
+        description: "Type of the event."
+      - name: event_timestamp
+        description: "Timestamp when the event occurred."
+        tests:
+          - not_null
+      - name: channel
+        description: "The channel through which the event was captured."
+      - name: campaign
+        description: "Marketing campaign associated with the event."
+      - name: cost
+        description: "Cost incurred for the marketing event."
+        tests:
+          - not_null
+      - name: transaction_year
+        description: "Year extracted from event_timestamp."
+        tests:
+          - not_null
+      - name: transaction_month
+        description: "Month extracted from event_timestamp."
+        tests:
+          - not_null
+
+  - name: stg_product_category
+    description: "Staging table for product related information"
+    columns:
+      - name: product_id
+        description: "Unique identifier for the product."
+        tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: "Name of the product."
+        tests:
+          - not_null
+      - name: category
+        description: "Category to which the product belongs."
+        tests:
+          - not_null
+
+  - name: stg_sales_transactions 
+    description: "Staging table for sales related transactions"
+    columns:
+      - name: transaction_id
+        description: "Unique identifier for the transaction."
+        tests:
+          - unique
+          - not_null
+      - name: product_id
+        description: "Identifier for the purchased product."
+        tests:
+          - not_null
+      - name: user_id
+        description: "Identifier for the user who made the transaction."
+        tests:
+          - not_null
+      - name: transaction_timestamp
+        description: "Timestamp when the transaction occurred."
+        tests:
+          - not_null
+      - name: revenue
+        description: "Revenue generated from the transaction."
+        tests:
+          - not_null
+      - name: cost
+        description: "Cost associated with the transaction."
+        tests:
+          - not_null
+      - name: transaction_year
+        description: "Year extracted from transaction_timestamp."
+        tests:
+          - not_null
+      - name: transaction_month
+        description: "Month extracted from transaction_timestamp."
+        tests:
+          - not_null

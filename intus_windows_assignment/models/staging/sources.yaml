@@ -1,0 +1,59 @@
+version: 2
+
+sources:
+  - name: marketing_and_sales
+    database: marketing_and_sales
+    schema: marketing_and_sales
+    tables:
+      - name: marketing_events
+        description: "This table is the source of all marketing events"
+        columns:
+          - name: event_id
+            description: "Unique identifier for each event"
+            data_type: integer
+          - name: event_name
+            description: "Name of the marketing event"
+            data_type: string
+          - name: event_date
+            description: "Date when the event occurred"
+            data_type: date
+          - name: event_type
+            description: "Type of the marketing event"
+            data_type: string
+          - name: customer_id
+            description: "Unique identifier for the customer associated with the event"
+            data_type: integer
+      - name: sales_transactions
+        description: "Captures all sales data"
+        columns:
+          - name: transaction_id
+            description: "Unique identifier for each transaction"
+            data_type: integer
+          - name: product_id
+            description: "Unique identifier for each product"
+            data_type: integer
+          - name: user_id
+            description: "Unique identifier for the user making the transaction"
+            data_type: integer
+          - name: transaction_timestamp
+            description: "Timestamp when the transaction occurred"
+            data_type: timestamp
+          - name: revenue
+            description: "Revenue generated from the transaction"
+            data_type: decimal
+          - name: cost
+            description: "Cost associated with the transaction"
+            data_type: decimal
+      - name: product_catalog
+        description: "Contains details of products"
+        columns:
+          - name: product_id
+            description: "Unique identifier for each product"
+            data_type: integer
+          - name: product_name
+            description: "Name of the product"
+            data_type: string
+          - name: category
+            description: "Category of the product"
+            data_type: string
+        

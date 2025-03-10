@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: aggregated_sales_and_marketing
+    description: "Aggregated sales and marketing events data for analytics."
+    columns:
+      - name: transaction_year
+        description: "Year of the transaction."
+        tests:
+          - not_null
+
+      - name: transaction_month
+        description: "Month of the transaction."
+        tests:
+          - not_null
+
+      - name: category
+        description: "Product category."
+
+      - name: unique_customers
+        description: "Number of unique customers who made transactions."
+        tests:
+          - not_null
+
+      - name: total_revenue
+        description: "Total revenue generated in the given time period."
+        tests:
+          - not_null
+          - is_positive
+
+      - name: total_cost
+        description: "Total cost incurred in the given time period."
+        tests:
+          - not_null
+          - is_positive
+
+      - name: revenue_to_cost_ratio
+        description: "Ratio of total revenue to total cost."
+        tests:
+          - not_null
+          - is_positive
+
+      - name: total_marketing_cost
+        description: "Total marketing cost for the given time period."
+        tests:
+          - not_null
+          - is_positive
+
+      - name: total_marketing_events
+        description: "Total marketing events recorded in the given time period."
+        tests:
+          - not_null
