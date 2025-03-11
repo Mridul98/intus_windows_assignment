@@ -3,8 +3,8 @@ SELECT
     product_id,
     user_id,
     transaction_timestamp,
-    revenue,
-    cost
+    COALESCE(revenue,0) AS revenue,
+    COALESCE(cost,0) AS cost
     EXTRACT(YEAR FROM transaction_timestamp) AS transaction_year,
     EXTRACT(MONTH FROM s.transaction_timestamp) AS transaction_month
 FROM
