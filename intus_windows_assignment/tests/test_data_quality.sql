@@ -14,11 +14,5 @@
     FROM {{ ref('business_performance_report') }}
     WHERE (total_revenue = 0 OR total_cost = 0)
     AND revenue_to_cost_ratio > 0
-    UNION ALL
-    SELECT 
-        revenue_to_cost_ratio
-    FROM {{ ref('business_performance_report') }}
-    WHERE (total_revenue = 0 AND total_cost = 0)
-    AND revenue_to_cost_ratio > 0
-
+ 
 {% endtest %}

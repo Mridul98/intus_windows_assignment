@@ -162,18 +162,16 @@ Like marketing events, this table data needs to be distributed based on combined
 ```SQL 
 WITH aggregated_marketing_data AS (
     SELECT
-        transaction_year,
-        transaction_month,
+        transaction_year_month,
         COUNT(event_id) AS total_marketing_events,
         SUM(cost) AS total_marketing_cost
     FROM {{ ref('stg_marketing_events') }}
-    GROUP BY transaction_year, transaction_month
+    GROUP BY transaction_year_month
 ),
 
 aggregated_sales_data AS (
     SELECT
-        sales.transaction_year,
-        sales.transaction_month,
+        sales.transaction_year_month,
         product_catalog.category,
         COUNT(DISTINCT sales.user_id) AS unique_customers,
         SUM(sales.revenue) AS total_revenue,
@@ -182,33 +180,42 @@ aggregated_sales_data AS (
     LEFT JOIN {{ ref('stg_product_catalog') }} AS product_catalog 
         ON sales.product_id = product_catalog.product_id
     GROUP BY 
-        sales.transaction_year, 
-        sales.transaction_month, 
-        product_catalog.category
-    ORDER BY 
-        sales.transaction_year, 
-        sales.transaction_month, 
+        sales.transaction_year_month,
         product_catalog.category
 ),
+final_result (
+    SELECT 
+        SPLIT_PART(sales.transaction_year_month, '|', 1)::INT AS transaction_year,
+        SPLIT_PART(sales.transaction_year_month, '|', 2)::INT AS transaction_month,
+        sales.category,
+        sales.unique_customers,
+        sales.total_revenue,
+        sales.total_cost,
+        marketing.total_marketing_cost,
+        marketing.total_marketing_events,
+        {{ revenue_to_cost_ratio(sales.total_revenue,sales.total_cost) }} AS revenue_to_cost_ratio
+    FROM aggregated_sales_data AS sales 
+    LEFT JOIN aggregated_marketing_data as marketing 
+    ON sales.transaction_year_month = marketing.transaction_year_month
+    WHERE sales.total_revenue > 0 
+)
 
 SELECT 
-    sales.transaction_year,
-    sales.transaction_month,
-    sales.category,
-    sales.unique_customers,
-    sales.total_revenue,
-    sales.total_cost,
-    marketing.total_marketing_cost,
-    marketing.total_marketing_events,
-    {{ revenue_to_cost_ratio(sales.total_revenue,sales.total_cost) }} AS revenue_to_cost_ratio
-FROM aggregated_sales_data AS sales 
-LEFT JOIN aggregated_marketing_data as marketing 
-ON sales.transaction_year_month = marketing.transaction_year_month
-WHERE sales.total_revenue > 0 
+    transaction_year,
+    transaction_month,
+    category,
+    unique_customers,
+    total_revenue,
+    total_cost,
+    total_marketing_cost,
+    total_marketing_events,
+    revenue_to_cost_ratio
+FROM final_result 
 ORDER BY 
-    sales.transaction_year,
-    sales.transaction_month,
-    sales.category
+    transaction_year,
+    transaction_month,
+    category
+
 ```
 
 ## SQL optimization explanation: 
@@ -220,14 +227,12 @@ So I have discarded the subquery and calculated the total marketing cost and oth
 ```SQL
 WITH aggregated_marketing_data AS (
     SELECT
-        transaction_year,
-        transaction_month,
+        transaction_year_month,
         COUNT(event_id) AS total_marketing_events,
         SUM(cost) AS total_marketing_cost
     FROM {{ ref('stg_marketing_events') }}
-    GROUP BY transaction_year, transaction_month
+    GROUP BY transaction_year_month
 ),
-
 ```
 
 The rest of the sales metrics aggregations are being done in this CTE:
@@ -235,8 +240,7 @@ The rest of the sales metrics aggregations are being done in this CTE:
 ```SQL 
 aggregated_sales_data AS (
     SELECT
-        sales.transaction_year,
-        sales.transaction_month,
+        sales.transaction_year_month,
         product_catalog.category,
         COUNT(DISTINCT sales.user_id) AS unique_customers,
         SUM(sales.revenue) AS total_revenue,
@@ -245,12 +249,7 @@ aggregated_sales_data AS (
     LEFT JOIN {{ ref('stg_product_catalog') }} AS product_catalog 
         ON sales.product_id = product_catalog.product_id
     GROUP BY 
-        sales.transaction_year, 
-        sales.transaction_month, 
-        product_catalog.category
-    ORDER BY 
-        sales.transaction_year, 
-        sales.transaction_month, 
+        sales.transaction_year_month,
         product_catalog.category
 ),
 ```
@@ -258,26 +257,38 @@ aggregated_sales_data AS (
 Finally we join both aggregated data into a single query by doing this: 
 
 ```SQL 
+final_result (
+    SELECT 
+        SPLIT_PART(sales.transaction_year_month, '|', 1)::INT AS transaction_year,
+        SPLIT_PART(sales.transaction_year_month, '|', 2)::INT AS transaction_month,
+        sales.category,
+        sales.unique_customers,
+        sales.total_revenue,
+        sales.total_cost,
+        marketing.total_marketing_cost,
+        marketing.total_marketing_events,
+        {{ revenue_to_cost_ratio(sales.total_revenue,sales.total_cost) }} AS revenue_to_cost_ratio
+    FROM aggregated_sales_data AS sales 
+    LEFT JOIN aggregated_marketing_data as marketing 
+    ON sales.transaction_year_month = marketing.transaction_year_month
+    WHERE sales.total_revenue > 0 
+)
+
 SELECT 
-    sales.transaction_year,
-    sales.transaction_month,
-    sales.category,
-    sales.unique_customers,
-    sales.total_revenue,
-    sales.total_cost,
-    marketing.total_marketing_cost,
-    marketing.total_marketing_events,
-    {{ revenue_to_cost_ratio(sales.total_revenue,sales.total_cost) }} AS revenue_to_cost_ratio
-FROM aggregated_sales_data AS sales 
-LEFT JOIN aggregated_marketing_data as marketing 
-ON sales.transaction_year_month = marketing.transaction_year_month
-WHERE sales.total_revenue > 0 
+    transaction_year,
+    transaction_month,
+    category,
+    unique_customers,
+    total_revenue,
+    total_cost,
+    total_marketing_cost,
+    total_marketing_events,
+    revenue_to_cost_ratio
+FROM final_result 
 ORDER BY 
-    sales.transaction_year,
-    sales.transaction_month,
-    sales.category
-
-
+    transaction_year,
+    transaction_month,
+    category
 ```
 ### notice that I have used a macro for calculating revenue to cost ratio by taking total revenue and total cost in the above query. I have also joined the data based on combined transaction year month column based on which the data is colocated and distributed across redshift cluster.
 
@@ -338,3 +349,9 @@ ORDER BY
 # The DBT code can be orchestrated by running this command: ``` dbt build --select +business_performance_report```
 
 # Note: To get to know the tests that I have written for each column of the DBT models, please have a look into the schema.yaml for each layers.
+
+# Few remarks: 
+    - I have desined the DBT models by following the medallion architecture (skipped the transform (silver layer) layer for preventing unnecessary model growth for this simple task)
+    - My assumptions are not tested in any existing amazon redshift cluster. And its all the guess work based on some optimization docs related to Redshift taken from the internet
+    - I believe performance optimization is much more of doing a lot of experiment rather than getting along with some fixed values for optimization. The way I have optimized is the result
+    of my initial guess.

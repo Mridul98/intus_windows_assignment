@@ -1,11 +1,3 @@
-{% test is_positive(model,column_name) %}
-
-    SELECT {{ column_name }}
-    FROM {{ model }}
-    WHERE {{ column_name }} < 0
-
-{% endtest %}
-
 {% macro revenue_to_cost_ratio(total_revenue, total_cost) %}
 
 -- calculate revenue to cost ratio using total revenue and total cost

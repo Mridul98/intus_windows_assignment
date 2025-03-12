@@ -1,7 +1,6 @@
 {{ config(
     materialized='table',
-    dist='key',
-    dist_key='transaction_year_month',
+    dist='transaction_year_month',
     sort=['transaction_year_month', 'product_id']
     ) 
 }}

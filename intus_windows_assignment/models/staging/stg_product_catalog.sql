@@ -1,7 +1,6 @@
 {{ config(
     materialized='table',
     dist='all',
-    dist_key='product_id',
     sort=['product_id','category']
     ) 
 }}
