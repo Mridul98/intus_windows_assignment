@@ -4,7 +4,7 @@ models:
   - name: aggregated_sales_and_marketing
     description: "Aggregated sales and marketing events data for analytics."
     columns:
-      - name: new_col_from_col1
+      - name: change_from_col2
       - name: transaction_year
         description: "Year of the transaction."
         tests:
